@@ -45,7 +45,7 @@ var copyCmd = &cobra.Command{
 			}
 		}
 
-		err = configops.ConfigRead("copy", &configPath)
+		err = configops.ConfigRead("copy", &copyConfig)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -88,7 +88,7 @@ var copyCmd = &cobra.Command{
 		}
 
 		// . Проверяем наличие файла на dst
-		typ, err := fileops.PathType(copyConfig.Src)
+		typ, err := fileops.PathType(copyConfig.Dst)
 		if err != nil && !copyConfig.Overwrite {
 			fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", copyConfig.Dst)
 			if inputs.Input() != "yes" {
