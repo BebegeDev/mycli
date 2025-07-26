@@ -1,0 +1,54 @@
+package fileops
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+)
+
+func PathType(path string) (string, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+	if fi.IsDir() {
+		return "dir", nil
+	}
+
+	if isArchive(path) {
+		return "archive", nil
+	}
+	return "file", nil
+}
+
+func isArchive(path string) bool {
+	ext := filepath.Ext(path)
+	return ext == ".zip" || ext == ".tar" || ext == ".tar.gz"
+
+}
+
+// Копирование файла
+func FileCopy(src, dst string) error {
+
+	// Проверка на чтение
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("не удалось открыть файл: %w", err)
+	}
+	defer sourceFile.Close()
+
+	// Проверка на создание файла назначения
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("не удалось создать файл назначения: %w", err)
+	}
+	defer destFile.Close()
+
+	// Копирование содержимого
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		return fmt.Errorf("ошибка при копировании: %w", err)
+	}
+	return nil
+}
