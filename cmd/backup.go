@@ -101,20 +101,20 @@ var backupCmd = &cobra.Command{
 			}
 		}
 
-		if config.Force {
-			err := fileops.RemovePath(config.CopyConfig.Src)
-			if err != nil {
-				fmt.Printf("He удалось удалить: [%s].\n %v\n", config.CopyConfig.Src, err)
-				return
-			}
-		}
-
 		// Определяем формат архива ".zip" || ".tar" || ".tar.gz"
 		switch config.TypeArch {
 		case "zip":
 			fileops.FileArchiveZIP(config.CopyConfig.Src, config.CopyConfig.Dst)
 		case "tar": // пока не реаизовано
 		case "tar.gz": // пока не реаизовано
+		}
+
+		if config.Force {
+			err := fileops.RemovePath(config.CopyConfig.Src)
+			if err != nil {
+				fmt.Printf("He удалось удалить: [%s].\n %v\n", config.CopyConfig.Src, err)
+				return
+			}
 		}
 
 		// . Вывод
