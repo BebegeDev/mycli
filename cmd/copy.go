@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2025 NAME HERE frodomoget@gmail.com
 */
 package cmd
 
@@ -10,35 +10,43 @@ import (
 	"github.com/BebegeDev/mycli/internal/fileops"
 	"github.com/BebegeDev/mycli/internal/flagops"
 	"github.com/BebegeDev/mycli/internal/inputs"
-	"github.com/BebegeDev/mycli/types"
+	"github.com/BebegeDev/mycli/types/filetypes"
 	"github.com/spf13/cobra"
 )
-
-// Структура для конфига
-// type CopyConfig struct {
-// 	Src, Dst  string
-// 	Overwrite bool
-// }
 
 // Список флагов
 var (
 	copySrc, copyDst string
 	copyOverwrite    bool
-	copyConfig       types.CopyConfig
+	copyConfig       filetypes.CopyConfig
 )
 
 // copyCmd represents the copy command
 var copyCmd = &cobra.Command{
 	Use:   "copy",
-	Short: "",
-	Long:  "",
+	Short: "Кирует файл c точки a в точку b",
+	Long: `Подкоманда предназначена для копирования файла.
+			Доступные флаги:
+				--src [path]: исходный файл 
+				--dst [path]: целевой файл
+					Для этих флагов есть проверки:
+						!Обязательное их наличие
+						!Проверка наличия src
+						!Проверка существующего dst, если таков есть, 
+							y пользователя спрашивается разрешение на перезапись (при отсутсвии --owerwrite), 
+							в случае отказа, копирование прекращается
+						!src не может равняться dst
+				--owerwrite : разрешение на перезапись dst, 
+					если указать разрешение на перепись не будет.
+			Имеется поддержка .yaml конфигов. Запись через shell имеет приоритет над конфигом`,
+
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// Основная логика
 		var err error
 		// Проверка на наличие флага конфига
 		if configPath != "" {
-			err := configops.ConfigExists(configPath)
+			err = configops.ConfigExists(configPath)
 			if err != nil {
 				fmt.Println(err)
 				return

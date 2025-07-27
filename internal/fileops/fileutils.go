@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// Проверка на тип файла
 func PathType(path string) (string, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
@@ -22,10 +23,10 @@ func PathType(path string) (string, error) {
 	return "file", nil
 }
 
+// Отпределяем тип архива
 func isArchive(path string) bool {
 	ext := filepath.Ext(path)
 	return ext == ".zip" || ext == ".tar" || ext == ".tar.gz"
-
 }
 
 // Копирование файла
