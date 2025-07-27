@@ -5,6 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
+	"time"
 
 	"github.com/BebegeDev/mycli/internal/configops"
 	"github.com/BebegeDev/mycli/internal/fileops"
@@ -15,10 +19,10 @@ import (
 )
 
 var (
-	backupSrc, backupDst string
-	addDate, force       bool
-	backupConfig         filetypes.BackupConfig
-	typeArch             string
+	backupSrc, backupDst            string
+	addDate, force, backupOverwrite bool
+	backupConfig                    filetypes.BackupConfig
+	typeArch                        string
 )
 
 var backupCmd = &cobra.Command{
@@ -48,17 +52,25 @@ var backupCmd = &cobra.Command{
 			return
 		}
 
-		if cmd.Flags().Changed("backupSrc") {
+		if cmd.Flags().Changed("src") {
 			config.CopyConfig.Src = backupSrc
 		}
 
-		if cmd.Flags().Changed("backupDst") {
+		if cmd.Flags().Changed("dst") {
 			config.CopyConfig.Dst = backupDst
 		}
 
-		if cmd.Flags().Changed("addDate") {
-			config.AddDate = addDate
+		if cmd.Flags().Changed("overwrite") {
+			config.CopyConfig.Overwrite = backupOverwrite
 		}
+
+		err = configops.ConfigRead("backup", &config)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		config.AddDate = addDate // значением будет либо переданный флаг, либо true по умолчанию
 
 		if cmd.Flags().Changed("force") {
 			config.Force = force
@@ -91,20 +103,44 @@ var backupCmd = &cobra.Command{
 			return
 		}
 
+		// Создаем обноленные названия файлов
+		srcBase := filepath.Base(config.CopyConfig.Src)
+		archiveName := srcBase
+		if config.AddDate {
+			archiveName = getDate(archiveName)
+		}
+		fmt.Println(config.AddDate)
+		archiveName = archiveName + "." + config.TypeArch
+		dstPath := filepath.Join(config.CopyConfig.Dst, archiveName)
+
 		// . Проверяем наличие файла на dst. Временная заглушка на typ --> _
-		_, err = fileops.PathType(config.CopyConfig.Dst)
-		if err != nil && !config.CopyConfig.Overwrite {
-			fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", config.CopyConfig.Dst)
-			if inputs.Input() != "yes" {
-				fmt.Println("Отмена бэкапирования.")
-				return
+		_, err = fileops.PathType(dstPath)
+		if err == nil {
+			// Файл существует!
+			if !config.CopyConfig.Overwrite {
+				fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", dstPath)
+				if inputs.Input() != "yes" {
+					fmt.Println("Отмена бэкапирования.")
+					return
+				}
 			}
+		} else if !os.IsNotExist(err) {
+			// Любая другая ошибка (например, нет доступа) — обработать отдельно
+			fmt.Printf("Ошибка при проверке файла %s: %v\n", dstPath, err)
+			return
+		}
+
+		fmt.Printf("Создаю архив по пути: %s\n", dstPath)
+		// Создаём папку назначения, если её нет
+		if err := os.MkdirAll(config.CopyConfig.Dst, 0755); err != nil {
+			fmt.Printf("He удалось создать папку назначения: %v\n", err)
+			return
 		}
 
 		// Определяем формат архива ".zip" || ".tar" || ".tar.gz"
 		switch config.TypeArch {
 		case "zip":
-			fileops.FileArchiveZIP(config.CopyConfig.Src, config.CopyConfig.Dst)
+			fileops.FileArchiveZIP(config.CopyConfig.Src, dstPath)
 		case "tar": // пока не реаизовано
 		case "tar.gz": // пока не реаизовано
 		}
@@ -125,9 +161,15 @@ var backupCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(backupCmd)
-	backupCmd.Flags().StringVar(&backupSrc, "backupSrc", "", "Путь к сборке")
-	backupCmd.Flags().StringVar(&backupDst, "backupDst", "", "Путь к архиву")
+	backupCmd.Flags().StringVar(&backupSrc, "src", "", "Путь к сборке")
+	backupCmd.Flags().StringVar(&backupDst, "dst", "", "Путь к архиву")
 	backupCmd.Flags().BoolVar(&addDate, "addDate", true, "Подстановка даты в имя бэкапа")
 	backupCmd.Flags().BoolVar(&force, "force", false, "Удаление старой сборки")
 	backupCmd.Flags().StringVar(&typeArch, "typeArch", "zip", "Формат архива")
+	copyCmd.Flags().BoolVar(&backupOverwrite, "owerwtite", false, "Перезапись")
+}
+
+func getDate(base string) string {
+	date := time.Now().Format("2006-01-02")
+	return base + "_" + date
 }
