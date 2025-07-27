@@ -53,3 +53,7 @@ func FileCopy(src, dst string) error {
 	}
 	return nil
 }
+
+func RemovePath(path string) error {
+	return os.RemoveAll(path)
+}

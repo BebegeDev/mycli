@@ -48,11 +48,11 @@ var backupCmd = &cobra.Command{
 			return
 		}
 
-		if cmd.Flags().Changed("src") {
+		if cmd.Flags().Changed("backupSrc") {
 			config.CopyConfig.Src = backupSrc
 		}
 
-		if cmd.Flags().Changed("dst") {
+		if cmd.Flags().Changed("backupDst") {
 			config.CopyConfig.Dst = backupDst
 		}
 
@@ -97,6 +97,14 @@ var backupCmd = &cobra.Command{
 			fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", config.CopyConfig.Dst)
 			if inputs.Input() != "yes" {
 				fmt.Println("Отмена бэкапирования.")
+				return
+			}
+		}
+
+		if config.Force {
+			err := fileops.RemovePath(config.CopyConfig.Src)
+			if err != nil {
+				fmt.Printf("He удалось удалить: [%s].\n %v\n", config.CopyConfig.Src, err)
 				return
 			}
 		}
