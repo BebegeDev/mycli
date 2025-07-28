@@ -81,13 +81,14 @@ copy:
   src: "tests/myfile.zip"
   dst: "tests/unpack"
   unpack: true
-  force: true
+  overwrite: true
 
 backup:
   src: "tests/myfile.txt"
   dst: "tests/backups"
   addDate: true
   force: true
+  overwrite: true
 ```
 
 
