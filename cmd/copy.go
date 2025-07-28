@@ -98,7 +98,7 @@ var copyCmd = &cobra.Command{
 
 		// . Проверяем наличие файла на dst
 		typ, err := fileops.PathType(config.Dst)
-		if err != nil && !config.Overwrite {
+		if err == nil && !config.Overwrite {
 			fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", config.Dst)
 			if inputs.Input() != "yes" {
 				fmt.Println("Отмена копирования.")
