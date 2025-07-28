@@ -114,8 +114,8 @@ func UnpackZIP(src, dst string) error {
 			continue
 		}
 
-		// Создаем домашку для файла
-		if err := os.Mkdir(filepath.Dir(target), f.Mode()); err != nil {
+		// Создаем домашку для файла (всю вложенность)
+		if err := os.MkdirAll(filepath.Dir(target), f.Mode()); err != nil {
 			return err
 		}
 
