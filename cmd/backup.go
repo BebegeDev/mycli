@@ -157,5 +157,5 @@ func init() {
 	backupCmd.Flags().BoolVar(&addDate, "addDate", true, "Подстановка даты в имя бэкапа")
 	backupCmd.Flags().BoolVar(&force, "force", false, "Удаление старой сборки")
 	backupCmd.Flags().StringVar(&typeArch, "typeArch", "zip", "Формат архива")
-	copyCmd.Flags().BoolVar(&backupOverwrite, "owerwtite", false, "Перезапись")
+	copyCmd.Flags().BoolVar(&backupOverwrite, "overwtite", false, "Перезапись")
 }
