@@ -132,5 +132,5 @@ func init() {
 	copyCmd.Flags().StringVar(&copySrc, "src", "", "Путь к исходному файлу")
 	copyCmd.Flags().StringVar(&copyDst, "dst", "", "Путь к целевому файлу")
 	copyCmd.Flags().BoolVar(&Overwrite, "overwrite", false, "Перезапись")
-	copyCmd.Flags().BoolVar(&Overwrite, "overwrite", false, "Перезапись")
+	copyCmd.Flags().BoolVar(&Unpack, "unpuck", false, "Перезапись")
 }
