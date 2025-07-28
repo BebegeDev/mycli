@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // Проверка на тип файла
@@ -56,4 +57,21 @@ func FileCopy(src, dst string) error {
 
 func RemovePath(path string) error {
 	return os.RemoveAll(path)
+}
+
+func Rename(src, dst, typeArch string, addDate bool) string {
+	// Создаем обноленные названия файлов
+	srcBase := filepath.Base(src)
+	archiveName := srcBase
+	if addDate {
+		archiveName = getDate(archiveName)
+	}
+	archiveName = archiveName + "." + typeArch
+	dstPath := filepath.Join(dst, archiveName)
+	return dstPath
+}
+
+func getDate(base string) string {
+	date := time.Now().Format("2006-01-02")
+	return base + "_" + date
 }

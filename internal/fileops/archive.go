@@ -35,6 +35,7 @@ func FileArchiveZIP(src, dst string) error {
 
 }
 
+// Архивация для файла
 func walkFile(src string, wr fileinterfaces.ArchiveWriter) error {
 	file, err := os.Open(src)
 	if err != nil {
@@ -54,6 +55,7 @@ func walkFile(src string, wr fileinterfaces.ArchiveWriter) error {
 	return nil
 }
 
+// Архивация для каталога
 func WalkDir(src string, wr fileinterfaces.ArchiveWriter) error {
 	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
 
@@ -88,4 +90,55 @@ func WalkDir(src string, wr fileinterfaces.ArchiveWriter) error {
 
 		return nil
 	})
+}
+
+// Распоковка ZIP
+func UnpackZIP(src, dst string) error {
+	// Открываем на чтение
+	reader, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	// Проходимся по внутреностям
+	for _, f := range reader.File {
+
+		target := filepath.Join(dst, f.Name)
+
+		// Если папка создаем всю вложеность калатогов
+		if f.FileInfo().IsDir() {
+			if err := os.MkdirAll(target, f.Mode()); err != nil {
+				return nil
+			}
+			continue
+		}
+
+		// Создаем домашку для файла
+		if err := os.Mkdir(filepath.Dir(target), f.Mode()); err != nil {
+			return err
+		}
+
+		// Исходник на чтение
+		in, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		// Создаем файл куда будем писать
+		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+
+		if _, err = io.Copy(out, in); err != nil {
+			return err
+		}
+
+		in.Close()
+		out.Close()
+
+	}
+
+	return nil
 }

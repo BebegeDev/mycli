@@ -16,9 +16,9 @@ import (
 
 // Список флагов
 var (
-	copySrc, copyDst string
-	Overwrite        bool
-	copyConfig       filetypes.CopyConfig
+	copySrc, copyDst  string
+	Overwrite, Unpack bool
+	copyConfig        filetypes.CopyConfig
 )
 
 // copyCmd represents the copy command
@@ -44,6 +44,7 @@ var copyCmd = &cobra.Command{
 
 		// Основная логика
 		var err error
+		config := copyConfig
 		// Проверка на наличие флага конфига
 		if configPath != "" {
 			err = configops.ConfigExists(configPath)
@@ -53,52 +54,52 @@ var copyCmd = &cobra.Command{
 			}
 		}
 
-		err = configops.ConfigRead("copy", &copyConfig)
+		err = configops.ConfigRead("copy", &config)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
 		if cmd.Flags().Changed("src") {
-			copyConfig.Src = copySrc
+			config.Src = copySrc
 		}
 
 		if cmd.Flags().Changed("dst") {
-			copyConfig.Dst = copyDst
+			config.Dst = copyDst
 		}
 
 		if cmd.Flags().Changed("overwrite") {
-			copyConfig.Overwrite = Overwrite
+			config.Overwrite = Overwrite
 		}
 
 		// . Проврека на наличие флагов
-		if flagops.Verification(copyConfig.Src) {
+		if flagops.Verification(config.Src) {
 			fmt.Println("Ошибка: не указан путь к исходному файлу")
 			return
 		}
 
-		if flagops.Verification(copyConfig.Dst) {
+		if flagops.Verification(config.Dst) {
 			fmt.Println("Ошибка: не указан путь к целевому файлу")
 			return
 		}
 
 		// . Проверка на копирование самого себя (без именений)
-		if copyConfig.Src == copyConfig.Dst {
+		if config.Src == config.Dst {
 			fmt.Println("Ошибка: исходный и целевой путь совпадают")
 			return
 		}
 
 		// . Проверяем наличие файла на src
-		_, err = fileops.PathType(copyConfig.Src)
+		_, err = fileops.PathType(config.Src)
 		if err != nil {
-			fmt.Printf("Ошибка: файл %s не существует\n", copyConfig.Src)
+			fmt.Printf("Ошибка: файл %s не существует\n", config.Src)
 			return
 		}
 
 		// . Проверяем наличие файла на dst
-		typ, err := fileops.PathType(copyConfig.Dst)
-		if err != nil && !copyConfig.Overwrite {
-			fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", copyConfig.Dst)
+		typ, err := fileops.PathType(config.Dst)
+		if err != nil && !config.Overwrite {
+			fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", config.Dst)
 			if inputs.Input() != "yes" {
 				fmt.Println("Отмена копирования.")
 				return
@@ -108,9 +109,12 @@ var copyCmd = &cobra.Command{
 		// Копируем
 		switch typ {
 		case "file":
-			err = fileops.FileCopy(copyConfig.Src, copyConfig.Dst)
+			err = fileops.FileCopy(config.Src, config.Dst)
 			if err != nil {
 				fmt.Println(err)
+			}
+			if config.Unpack {
+				fileops.UnpackZIP(config.Src, config.Dst)
 			}
 		case "dir":
 			// TODO: реализовать CopyDir(src, dst)
@@ -127,5 +131,6 @@ func init() {
 	rootCmd.AddCommand(copyCmd)
 	copyCmd.Flags().StringVar(&copySrc, "src", "", "Путь к исходному файлу")
 	copyCmd.Flags().StringVar(&copyDst, "dst", "", "Путь к целевому файлу")
+	copyCmd.Flags().BoolVar(&Overwrite, "overwrite", false, "Перезапись")
 	copyCmd.Flags().BoolVar(&Overwrite, "overwrite", false, "Перезапись")
 }

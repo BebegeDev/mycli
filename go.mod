@@ -5,7 +5,6 @@ go 1.24.4
 require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
-	go.starlark.net v0.0.0-20250717191651-336a4b3a6d1d
 )
 
 require (

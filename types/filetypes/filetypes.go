@@ -1,8 +1,8 @@
 package filetypes
 
 type CopyConfig struct {
-	Src, Dst  string
-	Overwrite bool
+	Src, Dst          string
+	Overwrite, Unpack bool
 }
 
 type BackupConfig struct {

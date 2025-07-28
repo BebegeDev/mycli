@@ -6,9 +6,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-
-	"time"
 
 	"github.com/BebegeDev/mycli/internal/configops"
 	"github.com/BebegeDev/mycli/internal/fileops"
@@ -104,14 +101,7 @@ var backupCmd = &cobra.Command{
 		}
 
 		// Создаем обноленные названия файлов
-		srcBase := filepath.Base(config.CopyConfig.Src)
-		archiveName := srcBase
-		if config.AddDate {
-			archiveName = getDate(archiveName)
-		}
-		fmt.Println(config.AddDate)
-		archiveName = archiveName + "." + config.TypeArch
-		dstPath := filepath.Join(config.CopyConfig.Dst, archiveName)
+		dstPath := fileops.Rename(config.CopyConfig.Src, config.CopyConfig.Dst, config.TypeArch, config.AddDate)
 
 		// . Проверяем наличие файла на dst. Временная заглушка на typ --> _
 		_, err = fileops.PathType(dstPath)
@@ -124,6 +114,7 @@ var backupCmd = &cobra.Command{
 					return
 				}
 			}
+
 		} else if !os.IsNotExist(err) {
 			// Любая другая ошибка (например, нет доступа) — обработать отдельно
 			fmt.Printf("Ошибка при проверке файла %s: %v\n", dstPath, err)
@@ -167,9 +158,4 @@ func init() {
 	backupCmd.Flags().BoolVar(&force, "force", false, "Удаление старой сборки")
 	backupCmd.Flags().StringVar(&typeArch, "typeArch", "zip", "Формат архива")
 	copyCmd.Flags().BoolVar(&backupOverwrite, "owerwtite", false, "Перезапись")
-}
-
-func getDate(base string) string {
-	date := time.Now().Format("2006-01-02")
-	return base + "_" + date
 }
