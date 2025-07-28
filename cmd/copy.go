@@ -113,13 +113,13 @@ var copyCmd = &cobra.Command{
 			if err != nil {
 				fmt.Println(err)
 			}
-			if config.Unpack {
-				fileops.UnpackZIP(config.Src, config.Dst)
-			}
+
 		case "dir":
 			// TODO: реализовать CopyDir(src, dst)
 		case "archive":
-			// TODO: реализовать CopyArchive(src, dst)
+			if config.Unpack {
+				fileops.UnpackZIP(config.Src, config.Dst)
+			}
 		}
 
 		// . Вывод
