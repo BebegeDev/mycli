@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/BebegeDev/mycli/internal/configops"
 	"github.com/BebegeDev/mycli/internal/fileops"
@@ -17,7 +18,7 @@ import (
 // Список флагов
 var (
 	copySrc, copyDst  string
-	Overwrite, Unpack bool
+	overwrite, unpack bool
 	copyConfig        filetypes.CopyConfig
 )
 
@@ -69,7 +70,11 @@ var copyCmd = &cobra.Command{
 		}
 
 		if cmd.Flags().Changed("overwrite") {
-			config.Overwrite = Overwrite
+			config.Overwrite = overwrite
+		}
+
+		if cmd.Flags().Changed("unpack") {
+			config.Unpack = unpack
 		}
 
 		// . Проврека на наличие флагов
@@ -90,40 +95,56 @@ var copyCmd = &cobra.Command{
 		}
 
 		// . Проверяем наличие файла на src
-		_, err = fileops.PathType(config.Src)
+		srcType, err := fileops.PathType(config.Src)
 		if err != nil {
-			fmt.Printf("Ошибка: файл %s не существует\n", config.Src)
+			fmt.Printf("Ошибка: исходник не найден или недоступен: %v\n", err)
 			return
 		}
 
 		// . Проверяем наличие файла на dst
-		typ, err := fileops.PathType(config.Dst)
-		if err != nil && !config.Overwrite {
-			fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", config.Dst)
+		dstType, err := fileops.PathType(config.Dst)
+		if err != nil && !os.IsNotExist(err) {
+			fmt.Printf("Ошибка при проверке назначения: %v\n", err)
+			return
+		}
+
+		if dstType != "notfound" && !config.Overwrite {
+			fmt.Printf("Файл/папка %s уже существует. Перезаписать? (yes/no): ", config.Dst)
 			if inputs.Input() != "yes" {
 				fmt.Println("Отмена копирования.")
 				return
 			}
 		}
-
 		// Копируем
-		switch typ {
+		switch srcType {
 		case "file":
 			err = fileops.FileCopy(config.Src, config.Dst)
 			if err != nil {
 				fmt.Println(err)
 			}
+			fmt.Println("Файл скопирован!")
 
 		case "dir":
 			// TODO: реализовать CopyDir(src, dst)
 		case "archive":
 			if config.Unpack {
-				fileops.UnpackZIP(config.Src, config.Dst)
+				err := fileops.UnpackZIP(config.Src, config.Dst)
+				if err != nil {
+					fmt.Println("Ошибка распаковки:", err)
+					return
+				}
+				fmt.Println("Файл скопирован и распакован!")
+			} else {
+				err = fileops.FileCopy(config.Src, config.Dst)
+				if err != nil {
+					fmt.Println(err)
+				}
+				fmt.Println("Файл скопирован!")
 			}
 		}
 
 		// . Вывод
-		fmt.Println("Файл скопирован!")
+
 	},
 }
 
@@ -131,6 +152,6 @@ func init() {
 	rootCmd.AddCommand(copyCmd)
 	copyCmd.Flags().StringVar(&copySrc, "src", "", "Путь к исходному файлу")
 	copyCmd.Flags().StringVar(&copyDst, "dst", "", "Путь к целевому файлу")
-	copyCmd.Flags().BoolVar(&Overwrite, "overwrite", false, "Перезапись")
-	copyCmd.Flags().BoolVar(&Overwrite, "overwrite", false, "Перезапись")
+	copyCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Перезапись")
+	copyCmd.Flags().BoolVar(&unpack, "unpack", false, "Перезапись")
 }

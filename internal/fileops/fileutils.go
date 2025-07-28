@@ -12,12 +12,16 @@ import (
 func PathType(path string) (string, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// Файл не найден — возвращаем особый тип, ошибки нет!
+			return "notfound", nil
+		}
+		// Какая-то другая ошибка — возвращаем ошибку
 		return "", err
 	}
 	if fi.IsDir() {
 		return "dir", nil
 	}
-
 	if isArchive(path) {
 		return "archive", nil
 	}
@@ -41,6 +45,12 @@ func FileCopy(src, dst string) error {
 	defer sourceFile.Close()
 
 	// Проверка на создание файла назначения
+	// Создаем подкаталоги если их нет
+	err = os.MkdirAll(filepath.Dir(dst), 0755)
+	if err != nil {
+		return err
+	}
+
 	destFile, err := os.Create(dst)
 	if err != nil {
 		return fmt.Errorf("не удалось создать файл назначения: %w", err)

@@ -61,12 +61,6 @@ var backupCmd = &cobra.Command{
 			config.CopyConfig.Overwrite = backupOverwrite
 		}
 
-		err = configops.ConfigRead("backup", &config)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
 		config.AddDate = addDate // значением будет либо переданный флаг, либо true по умолчанию
 
 		if cmd.Flags().Changed("force") {
@@ -104,21 +98,19 @@ var backupCmd = &cobra.Command{
 		dstPath := fileops.Rename(config.CopyConfig.Src, config.CopyConfig.Dst, config.TypeArch, config.AddDate)
 
 		// . Проверяем наличие файла на dst. Временная заглушка на typ --> _
-		_, err = fileops.PathType(dstPath)
-		if err == nil {
-			// Файл существует!
-			if !config.CopyConfig.Overwrite {
-				fmt.Printf("Файл %s уже существует, перезаписать (yes, no)?: ", dstPath)
-				if inputs.Input() != "yes" {
-					fmt.Println("Отмена бэкапирования.")
-					return
-				}
-			}
-
-		} else if !os.IsNotExist(err) {
-			// Любая другая ошибка (например, нет доступа) — обработать отдельно
-			fmt.Printf("Ошибка при проверке файла %s: %v\n", dstPath, err)
+		// . Проверяем наличие файла на dst
+		dstType, err := fileops.PathType(config.CopyConfig.Dst)
+		if err != nil && !os.IsNotExist(err) {
+			fmt.Printf("Ошибка при проверке назначения: %v\n", err)
 			return
+		}
+
+		if dstType != "notfound" && !config.CopyConfig.Overwrite {
+			fmt.Printf("Файл/папка %s уже существует. Перезаписать? (yes/no): ", config.CopyConfig.Dst)
+			if inputs.Input() != "yes" {
+				fmt.Println("Отмена копирования.")
+				return
+			}
 		}
 
 		fmt.Printf("Создаю архив по пути: %s\n", dstPath)
@@ -157,5 +149,5 @@ func init() {
 	backupCmd.Flags().BoolVar(&addDate, "addDate", true, "Подстановка даты в имя бэкапа")
 	backupCmd.Flags().BoolVar(&force, "force", false, "Удаление старой сборки")
 	backupCmd.Flags().StringVar(&typeArch, "typeArch", "zip", "Формат архива")
-	copyCmd.Flags().BoolVar(&backupOverwrite, "owerwtite", false, "Перезапись")
+	backupCmd.Flags().BoolVar(&backupOverwrite, "overwtite", false, "Перезапись")
 }

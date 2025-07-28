@@ -2,6 +2,7 @@ package fileops
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -94,51 +95,50 @@ func WalkDir(src string, wr fileinterfaces.ArchiveWriter) error {
 
 // Распоковка ZIP
 func UnpackZIP(src, dst string) error {
-	// Открываем на чтение
+	fmt.Println("1")
+	// Создаём корневую папку, если её нет
+	// base := filepath.Base(src)                           // "test.zip"
+	// name := strings.TrimSuffix(base, filepath.Ext(base)) // "test"
+	// dstDir := filepath.Join(dst, name)                   // "tests/unpack/test"
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return fmt.Errorf("не удалось создать папку назначения: %w", err)
+	}
+
 	reader, err := zip.OpenReader(src)
 	if err != nil {
 		return err
 	}
 	defer reader.Close()
 
-	// Проходимся по внутреностям
 	for _, f := range reader.File {
-
 		target := filepath.Join(dst, f.Name)
 
-		// Если папка создаем всю вложеность калатогов
 		if f.FileInfo().IsDir() {
 			if err := os.MkdirAll(target, f.Mode()); err != nil {
-				return nil
+				return err
 			}
 			continue
 		}
 
-		// Создаем домашку для файла
-		if err := os.Mkdir(filepath.Dir(target), f.Mode()); err != nil {
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
 			return err
 		}
 
-		// Исходник на чтение
 		in, err := f.Open()
 		if err != nil {
 			return err
 		}
+		defer in.Close()
 
-		// Создаем файл куда будем писать
 		out, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, f.Mode())
 		if err != nil {
 			return err
 		}
+		defer out.Close()
 
 		if _, err = io.Copy(out, in); err != nil {
 			return err
 		}
-
-		in.Close()
-		out.Close()
-
 	}
-
 	return nil
 }
