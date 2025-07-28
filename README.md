@@ -9,6 +9,7 @@
 - **copy**  
   - Копирование файлов между папками
   - Поддержка архивов (.zip): копирование с опциональной распаковкой (`--unpack`)
+  - Флаг `--force`: перезапись целевого файла без подтверждения
   - Чтение параметров из флагов или yaml-конфига
 
 - **backup**  
@@ -51,3 +52,44 @@
 
 ```sh
 mycli copy --src=tests/myfile.txt --dst=tests/copied.txt
+```
+
+### Копирование и распаковка архива
+```sh
+mycli copy --src=tests/myfile.zip --dst=tests/unpack --unpack
+```
+
+### Копирование файла с принудительной перезаписью
+```sh
+mycli copy --src=tests/myfile.txt --dst=tests/copied.txt --force
+```
+
+### Бэкап файла с датой в имени и удалением исходника
+```sh
+mycli backup --src=tests/myfile.txt --dst=tests/backups --addDate --force
+```
+
+### Запуск с yaml-конфигом
+```sh
+mycli copy --config=config.yaml
+mycli backup --config=config.yaml
+```
+
+### Пример простого yaml-конфига
+```yaml
+copy:
+  src: "tests/myfile.zip"
+  dst: "tests/unpack"
+  unpack: true
+  force: true
+
+backup:
+  src: "tests/myfile.txt"
+  dst: "tests/backups"
+  addDate: true
+  force: true
+```
+
+
+
+
