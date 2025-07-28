@@ -61,12 +61,6 @@ var backupCmd = &cobra.Command{
 			config.CopyConfig.Overwrite = backupOverwrite
 		}
 
-		err = configops.ConfigRead("backup", &config)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
 		config.AddDate = addDate // значением будет либо переданный флаг, либо true по умолчанию
 
 		if cmd.Flags().Changed("force") {
